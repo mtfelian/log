@@ -117,3 +117,13 @@ func InitLog() (*Logger, error) {
 	}
 	return &Logger{logger}, nil
 }
+
+// LogPrefixedError записывает ошибку с заданным префиксом prefix и сообщением msg
+func (logger *Logger) LogPrefixedError(prefix string, msg string) {
+	logger.Errorf("[%s ERROR] %s", prefix, msg)
+}
+
+// LogPrefixedSuccess записывает успех с заданным префиксом prefix и сообщением msg
+func (logger *Logger) LogPrefixedSuccess(prefix string, msg string) {
+	logger.Errorf("[%s SUCCESS] %s", prefix, msg)
+}
