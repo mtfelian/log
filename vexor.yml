@@ -5,4 +5,4 @@ install:
 - export GOPATH=/home/vexor
 - export PATH=$PATH:$GOPATH/bin
 - go get github.com/gin-gonic/gin
-
+- go get github.com/ccding/go-logging/logging
