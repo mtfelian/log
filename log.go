@@ -111,7 +111,7 @@ func InitLog() (*Logger, error) {
 	}
 
 	logger, err := logging.FileLogger("log", // имя лога, нигде не используется пока
-		logging.WARN, "[%6s] [%s] %s():%d -> %s\n levelname,time,funcname,lineno,message", "02.01.2006 15:04:05", logPath, true)
+		logging.INFO, "[%6s] [%s] %s():%d -> %s\n levelname,time,funcname,lineno,message", "02.01.2006 15:04:05", logPath, true)
 	if err != nil {
 		return nil, err
 	}
