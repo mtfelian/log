@@ -3,11 +3,25 @@ package log
 import (
 	"net/http"
 	"time"
-
 	"github.com/gin-gonic/gin"
+	"fmt"
 )
 
-func (logger *Logger) LogError(c *gin.Context, responseCode int, msg string, requestBody []byte) {
+const errorCodeSuccess uint = 0
+
+// StandardError is a standard error to return with Gin
+type StandardError struct {
+	Code uint `json:"code"`
+	Message string `json:"error"`
+}
+
+// Error implements builtin error interface
+func (err StandardError) Error() string {
+	return fmt.Sprintf("%d: %s", err.Code, err.Message)
+}
+
+// Error writes error into log
+func (logger *Logger) Error(c *gin.Context, httpCode int, errorCode uint, msg string, requestBody []byte) {
 	var requestUrlString string
 	var request *http.Request
 	if c != nil {
@@ -15,7 +29,8 @@ func (logger *Logger) LogError(c *gin.Context, responseCode int, msg string, req
 		request = c.Request
 	}
 
-	logger.Errorf("[%d] %s [%s] %s", responseCode, time.Now().Format("02.01.2006 15:04:05"), requestUrlString, msg)
+	logger.Errorf("[%d][%d] %s [%s] %s", httpCode, errorCode,
+		time.Now().Format("02.01.2006 15:04:05"), requestUrlString, msg)
 	if requestBody != nil {
 		logger.Errorf("Body: %s", string(requestBody))
 	}
@@ -24,15 +39,16 @@ func (logger *Logger) LogError(c *gin.Context, responseCode int, msg string, req
 	}
 }
 
-func (logger *Logger) LogAndReturnError(c *gin.Context, responseCode int, msg string, requestBody []byte) {
-	logger.LogError(c, responseCode, msg, requestBody)
+// ReturnError writes error into log and returns an error
+func (logger *Logger) ReturnError(c *gin.Context, httpCode int, errorCode uint, msg string, requestBody []byte) {
+	logger.Error(c, httpCode, errorCode, msg, requestBody)
 	if c != nil {
-		c.JSON(responseCode, gin.H{"error": msg})
+		c.JSON(httpCode, StandardError{errorCode, msg})
 	}
 }
 
-// LogSuc
-func (logger *Logger) LogSuccess(c *gin.Context, responseCode int, msg string, requestBody []byte) {
+// Success writes success into log
+func (logger *Logger) Success(c *gin.Context, httpCode int, msg string, requestBody []byte) {
 	var requestUrlString string
 	var request *http.Request
 	if c != nil {
@@ -40,7 +56,8 @@ func (logger *Logger) LogSuccess(c *gin.Context, responseCode int, msg string, r
 		request = c.Request
 	}
 
-	logger.Infof("[%d] %s [%s] %s", responseCode, time.Now().Format("02.01.2006 15:04:05"), requestUrlString, msg)
+	logger.Infof("[%d][%d] %s [%s] %s", httpCode, errorCodeSuccess,
+		time.Now().Format("02.01.2006 15:04:05"), requestUrlString, msg)
 	if requestBody != nil {
 		logger.Infof("Body: %s", string(requestBody))
 	}
