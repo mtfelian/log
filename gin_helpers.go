@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 	"github.com/gin-gonic/gin"
-	"github.com/mtfelian/error"
+	. "github.com/mtfelian/error"
 )
 
 // Error writes error into log
@@ -30,7 +30,7 @@ func (logger *Logger) Error(c *gin.Context, httpCode int, errorCode uint, msg st
 func (logger *Logger) ReturnError(c *gin.Context, httpCode int, errorCode uint, msg string, requestBody []byte) {
 	logger.Error(c, httpCode, errorCode, msg, requestBody)
 	if c != nil {
-		c.JSON(httpCode, error.StandardError{errorCode, msg})
+		c.JSON(httpCode, NewErrorf(errorCode, msg))
 	}
 }
 
@@ -43,7 +43,7 @@ func (logger *Logger) Success(c *gin.Context, httpCode int, msg string, requestB
 		request = c.Request
 	}
 
-	logger.Infof("[%d][%d] %s [%s] %s", httpCode, error.CodeSuccess,
+	logger.Infof("[%d][%d] %s [%s] %s", httpCode, CodeSuccess,
 		time.Now().Format("02.01.2006 15:04:05"), requestUrlString, msg)
 	if requestBody != nil {
 		logger.Infof("Body: %s", string(requestBody))
