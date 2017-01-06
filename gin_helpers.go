@@ -4,21 +4,8 @@ import (
 	"net/http"
 	"time"
 	"github.com/gin-gonic/gin"
-	"fmt"
+	"github.com/mtfelian/error"
 )
-
-const errorCodeSuccess uint = 0
-
-// StandardError is a standard error to return with Gin
-type StandardError struct {
-	Code uint `json:"code"`
-	Message string `json:"error"`
-}
-
-// Error implements builtin error interface
-func (err StandardError) Error() string {
-	return fmt.Sprintf("%d: %s", err.Code, err.Message)
-}
 
 // Error writes error into log
 func (logger *Logger) Error(c *gin.Context, httpCode int, errorCode uint, msg string, requestBody []byte) {
@@ -43,7 +30,7 @@ func (logger *Logger) Error(c *gin.Context, httpCode int, errorCode uint, msg st
 func (logger *Logger) ReturnError(c *gin.Context, httpCode int, errorCode uint, msg string, requestBody []byte) {
 	logger.Error(c, httpCode, errorCode, msg, requestBody)
 	if c != nil {
-		c.JSON(httpCode, StandardError{errorCode, msg})
+		c.JSON(httpCode, error.StandardError{errorCode, msg})
 	}
 }
 
@@ -56,7 +43,7 @@ func (logger *Logger) Success(c *gin.Context, httpCode int, msg string, requestB
 		request = c.Request
 	}
 
-	logger.Infof("[%d][%d] %s [%s] %s", httpCode, errorCodeSuccess,
+	logger.Infof("[%d][%d] %s [%s] %s", httpCode, error.CodeSuccess,
 		time.Now().Format("02.01.2006 15:04:05"), requestUrlString, msg)
 	if requestBody != nil {
 		logger.Infof("Body: %s", string(requestBody))

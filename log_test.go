@@ -35,7 +35,7 @@ func TestEnumerateLogFiles(t *testing.T) {
 			t.Fatalf("Что-то не то с regexp: %v", err)
 		}
 		if !match {
-			t.Fatal("Неудовлетворительное имя в списке: %s", fileName)
+			t.Fatalf("Неудовлетворительное имя в списке: %s", fileName)
 		}
 	}
 }
