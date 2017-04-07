@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ccding/go-logging/logging"
+	"github.com/mtfelian/cli"
 )
 
 var (
@@ -116,6 +117,46 @@ func InitLog() (*Logger, error) {
 		return nil, err
 	}
 	return &Logger{logger}, nil
+}
+
+// Criticalf добавляет в лог запись с уровнем CRITICAL
+func (logger *Logger) Criticalf(format string, v ...interface{}) {
+	logger.Logger.Criticalf(cli.Sprintf(format, v...))
+}
+
+// Fatalf добавляет в лог запись с уровнем FATAL
+func (logger *Logger) Fatalf(format string, v ...interface{}) {
+	logger.Logger.Fatalf(cli.Sprintf(format, v...))
+}
+
+// Errorf добавляет в лог запись с уровнем ERROR
+func (logger *Logger) Errorf(format string, v ...interface{}) {
+	logger.Logger.Errorf(cli.Sprintf(format, v...))
+}
+
+// Warnf добавляет в лог запись с уровнем WARN
+func (logger *Logger) Warnf(format string, v ...interface{}) {
+	logger.Logger.Warnf(cli.Sprintf(format, v...))
+}
+
+// Warningf добавляет в лог запись с уровнем WARNING
+func (logger *Logger) Warningf(format string, v ...interface{}) {
+	logger.Logger.Warningf(cli.Sprintf(format, v...))
+}
+
+// Infof добавляет в лог запись с уровнем INFO
+func (logger *Logger) Infof(format string, v ...interface{}) {
+	logger.Logger.Infof(cli.Sprintf(format, v...))
+}
+
+// Debugf добавляет в лог запись с уровнем DEBUG
+func (logger *Logger) Debugf(format string, v ...interface{}) {
+	logger.Logger.Debugf(cli.Sprintf(format, v...))
+}
+
+// Notsetf добавляет в лог запись с неустановленным уровнем
+func (logger *Logger) Notsetf(format string, v ...interface{}) {
+	logger.Logger.Notsetf(cli.Sprintf(format, v...))
 }
 
 // LogPrefixedError записывает ошибку с заданным префиксом prefix и сообщением msg
