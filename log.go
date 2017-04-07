@@ -125,5 +125,5 @@ func (logger *Logger) LogPrefixedError(prefix string, msg string) {
 
 // LogPrefixedSuccess записывает успех с заданным префиксом prefix и сообщением msg
 func (logger *Logger) LogPrefixedSuccess(prefix string, msg string) {
-	logger.Errorf("[%s SUCCESS] %s", prefix, msg)
+	logger.Infof("[%s SUCCESS] %s", prefix, msg)
 }
