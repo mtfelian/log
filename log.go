@@ -7,9 +7,12 @@ import (
 	"path/filepath"
 	"regexp"
 	"time"
+	"sync"
 
 	"github.com/ccding/go-logging/logging"
 	"github.com/mtfelian/cli"
+	"runtime/debug"
+	"strings"
 )
 
 var (
@@ -18,6 +21,9 @@ var (
 
 type Logger struct {
 	*logging.Logger
+
+	logSync   sync.Mutex // мьютекс для показа стека
+	showStack bool       // показать стек-трейс
 }
 
 const logFileExtension = ".log"
@@ -64,13 +70,13 @@ func getPath(logName string) (string, error) {
 func EnumerateLogFiles(postfix string) ([]string, error) {
 	logDirName, err := getDir()
 	if err != nil {
-		return []string{}, fmt.Errorf("Ошибка получения директории с логами: %v", err)
+		return []string{}, fmt.Errorf("Error getting logdir: %v", err)
 	}
 	logDirName = filepath.Join(logDirName, postfix)
 
 	files, err := ioutil.ReadDir(logDirName)
 	if err != nil {
-		return []string{}, fmt.Errorf("Ошибка чтения директории с логами: %v", err)
+		return []string{}, fmt.Errorf("Error reading logdir: %v", err)
 	}
 
 	fileNames := []string{}
@@ -79,7 +85,7 @@ func EnumerateLogFiles(postfix string) ([]string, error) {
 
 		matches, err := regexp.MatchString(logFileNameRegexp, fileName)
 		if err != nil {
-			return []string{}, fmt.Errorf("Ошибка проверки regexp имени файла: %v", err)
+			return []string{}, fmt.Errorf("Failed to check filename regexp: %v", err)
 		}
 		if !matches {
 			// судя по имени, это не файл лога
@@ -94,12 +100,12 @@ func EnumerateLogFiles(postfix string) ([]string, error) {
 func GetLogContent(name string) (string, error) {
 	logPath, err := getPath(name)
 	if err != nil {
-		return "", fmt.Errorf("Ошибка получения пути к файлу лога %s: %v", name, err)
+		return "", fmt.Errorf("Error getting path to log file %s: %v", name, err)
 	}
 
 	b, err := ioutil.ReadFile(logPath)
 	if err != nil {
-		return "", fmt.Errorf("Ошибка чтения файла лога %s: %v", name, err)
+		return "", fmt.Errorf("Error reading log file %s: %v", name, err)
 	}
 	return string(b), nil
 }
@@ -116,27 +122,61 @@ func InitLog() (*Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Logger{logger}, nil
+	return &Logger{logger, sync.Mutex{}, false}, nil
+}
+
+// NextWithStack() включает показ стек-трейса при следующем вызове одной из функций записи в лог logger.*f()
+func (logger *Logger) NextWithStack() {
+	logger.showStack = true
+}
+
+func (logger *Logger) stripFromStackTrace(depth int, stackTrace string) string {
+	parts := strings.Split(stackTrace, "\t")
+	truncatedStackTrace := ""
+	for i, part := range parts {
+		if i < depth {
+			continue
+		}
+		truncatedStackTrace += fmt.Sprintf("%s\t", part)
+	}
+	return truncatedStackTrace
+}
+
+// logf() выводит в лог сообщение с уровнем level, заданной строкой format с параметрами спецификаторов v
+func (logger *Logger) logf(level logging.Level, format string, v ...interface{}) {
+	logger.logSync.Lock()
+	defer logger.logSync.Unlock()
+
+	s := cli.Sprintf(format, v...)
+	if logger.showStack {
+		const stacktraceText = "Stacktrace follows: "
+		// 3 это кол-во вырезаемых записей трассировки
+		truncatedStackTrace := logger.stripFromStackTrace(3, string(debug.Stack()))
+		s += cli.Sprintf("\n{R%s{0\n{A%s{0\n", stacktraceText, truncatedStackTrace)
+		logger.showStack = false
+	}
+
+	logger.Logger.Logf(level, s)
 }
 
 // Criticalf добавляет в лог запись с уровнем CRITICAL
 func (logger *Logger) Criticalf(format string, v ...interface{}) {
-	logger.Logger.Criticalf(cli.Sprintf(format, v...))
+	logger.logf(logging.CRITICAL, format, v...)
 }
 
 // Fatalf добавляет в лог запись с уровнем FATAL
 func (logger *Logger) Fatalf(format string, v ...interface{}) {
-	logger.Logger.Fatalf(cli.Sprintf(format, v...))
+	logger.logf(logging.FATAL, format, v...)
 }
 
 // Errorf добавляет в лог запись с уровнем ERROR
 func (logger *Logger) Errorf(format string, v ...interface{}) {
-	logger.Logger.Errorf(cli.Sprintf(format, v...))
+	logger.logf(logging.ERROR, format, v...)
 }
 
 // Warnf добавляет в лог запись с уровнем WARN
 func (logger *Logger) Warnf(format string, v ...interface{}) {
-	logger.Logger.Warnf(cli.Sprintf(format, v...))
+	logger.logf(logging.WARN, format, v...)
 }
 
 // Warningf добавляет в лог запись с уровнем WARNING
@@ -146,17 +186,17 @@ func (logger *Logger) Warningf(format string, v ...interface{}) {
 
 // Infof добавляет в лог запись с уровнем INFO
 func (logger *Logger) Infof(format string, v ...interface{}) {
-	logger.Logger.Infof(cli.Sprintf(format, v...))
+	logger.logf(logging.INFO, format, v...)
 }
 
 // Debugf добавляет в лог запись с уровнем DEBUG
 func (logger *Logger) Debugf(format string, v ...interface{}) {
-	logger.Logger.Debugf(cli.Sprintf(format, v...))
+	logger.logf(logging.DEBUG, format, v...)
 }
 
 // Notsetf добавляет в лог запись с неустановленным уровнем
 func (logger *Logger) Notsetf(format string, v ...interface{}) {
-	logger.Logger.Notsetf(cli.Sprintf(format, v...))
+	logger.logf(logging.NOTSET, format, v...)
 }
 
 // LogPrefixedError записывает ошибку с заданным префиксом prefix и сообщением msg
