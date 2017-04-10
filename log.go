@@ -21,9 +21,7 @@ var (
 
 type Logger struct {
 	*logging.Logger
-
-	logSync   sync.Mutex // мьютекс для показа стека
-	showStack bool       // показать стек-трейс
+	logSync   sync.Mutex         // мьютекс для логирования
 }
 
 const logFileExtension = ".log"
@@ -122,14 +120,10 @@ func InitLog() (*Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Logger{logger, sync.Mutex{}, false}, nil
+	return &Logger{logger, sync.Mutex{}}, nil
 }
 
-// NextWithStack() включает показ стек-трейса при следующем вызове одной из функций записи в лог logger.*f()
-func (logger *Logger) NextWithStack() {
-	logger.showStack = true
-}
-
+// stripFromStackTrace вырезает записи на глубину depth из stackTrace
 func (logger *Logger) stripFromStackTrace(depth int, stackTrace string) string {
 	parts := strings.Split(stackTrace, "\t")
 	truncatedStackTrace := ""
@@ -139,21 +133,30 @@ func (logger *Logger) stripFromStackTrace(depth int, stackTrace string) string {
 		}
 		truncatedStackTrace += fmt.Sprintf("%s\t", part)
 	}
-	return truncatedStackTrace
+
+	parts = strings.Split(truncatedStackTrace, "\n")
+	if len(parts) == 0 {
+		return truncatedStackTrace
+	}
+	for i, part := range parts {
+		parts[i] = strings.TrimRight(part, "\t")
+	}
+	
+	return strings.Join(parts[1:], "\n")
 }
 
 // logf() выводит в лог сообщение с уровнем level, заданной строкой format с параметрами спецификаторов v
-func (logger *Logger) logf(level logging.Level, format string, v ...interface{}) {
+func (logger *Logger) logf(showStackTrace bool, level logging.Level, format string, v ...interface{}) {
 	logger.logSync.Lock()
 	defer logger.logSync.Unlock()
 
 	s := cli.Sprintf(format, v...)
-	if logger.showStack {
-		const stacktraceText = "Stacktrace follows: "
+	if showStackTrace {
+		const stackTraceTextBegin = "Stacktrace follows: "
+		const stackTraceTextEnd = "End of stacktrace. "
 		// 3 это кол-во вырезаемых записей трассировки
 		truncatedStackTrace := logger.stripFromStackTrace(3, string(debug.Stack()))
-		s += cli.Sprintf("\n{R%s{0\n{A%s{0\n", stacktraceText, truncatedStackTrace)
-		logger.showStack = false
+		s += cli.Sprintf("\n{R%s\n{A%s{R%s{0\n", stackTraceTextBegin, truncatedStackTrace, stackTraceTextEnd)
 	}
 
 	logger.Logger.Logf(level, s)
@@ -161,42 +164,82 @@ func (logger *Logger) logf(level logging.Level, format string, v ...interface{})
 
 // Criticalf добавляет в лог запись с уровнем CRITICAL
 func (logger *Logger) Criticalf(format string, v ...interface{}) {
-	logger.logf(logging.CRITICAL, format, v...)
+	logger.logf(false, logging.CRITICAL, format, v...)
+}
+
+// CriticalfStack добавляет в лог запись с уровнем CRITICAL и трассировкой вызовов
+func (logger *Logger) CriticalfStack(format string, v ...interface{}) {
+	logger.logf(true, logging.CRITICAL, format, v...)
 }
 
 // Fatalf добавляет в лог запись с уровнем FATAL
 func (logger *Logger) Fatalf(format string, v ...interface{}) {
-	logger.logf(logging.FATAL, format, v...)
+	logger.logf(false, logging.FATAL, format, v...)
+}
+
+// FatalfStack добавляет в лог запись с уровнем FATAL и трассировкой вызовов
+func (logger *Logger) FatalfStack(format string, v ...interface{}) {
+	logger.logf(true, logging.FATAL, format, v...)
 }
 
 // Errorf добавляет в лог запись с уровнем ERROR
 func (logger *Logger) Errorf(format string, v ...interface{}) {
-	logger.logf(logging.ERROR, format, v...)
+	logger.logf(false, logging.ERROR, format, v...)
+}
+
+// ErrorfStack добавляет в лог запись с уровнем ERROR и трассировкой вызовов
+func (logger *Logger) ErrorfStack(format string, v ...interface{}) {
+	logger.logf(true, logging.ERROR, format, v...)
 }
 
 // Warnf добавляет в лог запись с уровнем WARN
 func (logger *Logger) Warnf(format string, v ...interface{}) {
-	logger.logf(logging.WARN, format, v...)
+	logger.logf(false, logging.WARN, format, v...)
+}
+
+// WarnfStack добавляет в лог запись с уровнем WARN и трассировкой вызовов
+func (logger *Logger) WarnfStack(format string, v ...interface{}) {
+	logger.logf(true, logging.WARN, format, v...)
 }
 
 // Warningf добавляет в лог запись с уровнем WARNING
 func (logger *Logger) Warningf(format string, v ...interface{}) {
-	logger.Logger.Warningf(cli.Sprintf(format, v...))
+	logger.logf(false, logging.WARNING, format, v...)
+}
+
+// WarningfStack добавляет в лог запись с уровнем WARNING и трассировкой вызовов
+func (logger *Logger) WarningfStack(format string, v ...interface{}) {
+	logger.logf(true, logging.WARNING, format, v...)
 }
 
 // Infof добавляет в лог запись с уровнем INFO
 func (logger *Logger) Infof(format string, v ...interface{}) {
-	logger.logf(logging.INFO, format, v...)
+	logger.logf(false, logging.INFO, format, v...)
+}
+
+// InfofStack добавляет в лог запись с уровнем INFO и трассировкой вызовов
+func (logger *Logger) InfofStack(format string, v ...interface{}) {
+	logger.logf(true, logging.INFO, format, v...)
 }
 
 // Debugf добавляет в лог запись с уровнем DEBUG
 func (logger *Logger) Debugf(format string, v ...interface{}) {
-	logger.logf(logging.DEBUG, format, v...)
+	logger.logf(false, logging.DEBUG, format, v...)
+}
+
+// DebugfStack добавляет в лог запись с уровнем DEBUG и трассировкой вызовов
+func (logger *Logger) DebugfStack(format string, v ...interface{}) {
+	logger.logf(true, logging.DEBUG, format, v...)
 }
 
 // Notsetf добавляет в лог запись с неустановленным уровнем
 func (logger *Logger) Notsetf(format string, v ...interface{}) {
-	logger.logf(logging.NOTSET, format, v...)
+	logger.logf(false, logging.NOTSET, format, v...)
+}
+
+// NotsetfStack добавляет в лог запись с неустановленным уровнем и трассировкой вызовов
+func (logger *Logger) NotsetfStack(format string, v ...interface{}) {
+	logger.logf(true, logging.NOTSET, format, v...)
 }
 
 // LogPrefixedError записывает ошибку с заданным префиксом prefix и сообщением msg
