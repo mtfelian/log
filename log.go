@@ -116,7 +116,7 @@ func InitLog() (*Logger, error) {
 	}
 
 	logger, err := logging.FileLogger("log", // имя лога, нигде не используется пока
-		logging.INFO, "[%6s] [%s] %s():%d -> %s\n levelname,time,funcname,lineno,message", "02.01.2006 15:04:05", logPath, true)
+		logging.INFO, "[%8s] [%s] %s\n levelname,time,message", "02.01.2006 15:04:05", logPath, true)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +141,7 @@ func (logger *Logger) stripFromStackTrace(depth int, stackTrace string) string {
 	for i, part := range parts {
 		parts[i] = strings.TrimRight(part, "\t")
 	}
-	
+
 	return strings.Join(parts[1:], "\n")
 }
 
