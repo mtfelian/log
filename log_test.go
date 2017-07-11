@@ -61,9 +61,9 @@ func TestLogStackTrace(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	logger.InfofStack("{YTest message 1 (with stack): {G%v{0", "OK")
-	logger.Errorf("{YTest message 2: {G%v{0", "OK")
-	logger.Infof("{YTest message 3: {G%v{0", "OK")
-	logger.FatalfStack("{YTest message 4: {G%v{0", "OK")
-	logger.Infof("{YTest message 5: {G%v{0", "OK")
+	logger.InfofStack("{Y|Test message 1 (with stack): {G|%v{0|", "OK")
+	logger.Errorf("{Y|Test message 2: {G|%v{0|", "OK")
+	logger.Infof("{Y|Test message 3: {G|%v{0|", "OK")
+	logger.FatalfStack("{Y|Test message 4: {G|%v{0|", "OK")
+	logger.Infof("{Y|Test message 5: {G|%v{0|", "OK")
 }

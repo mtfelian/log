@@ -157,7 +157,7 @@ func (logger *Logger) logf(showStackTrace bool, level logging.Level, format stri
 		const stackTraceTextEnd = "End of stacktrace. "
 		// 3 это кол-во вырезаемых записей трассировки
 		truncatedStackTrace := logger.stripFromStackTrace(3, string(debug.Stack()))
-		s += cli.Sprintf("\n{R%s\n{A%s{R%s{0\n", stackTraceTextBegin, truncatedStackTrace, stackTraceTextEnd)
+		s += cli.Sprintf("\n{R|%s\n{A|%s{R|%s{0|\n", stackTraceTextBegin, truncatedStackTrace, stackTraceTextEnd)
 	}
 
 	logger.Logger.Logf(level, s)
