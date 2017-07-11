@@ -1,10 +1,12 @@
 package log
 
 import (
-	"net/http"
-	"time"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	. "github.com/mtfelian/error"
+	"net/http"
+	"net/url"
+	"time"
 )
 
 // Error writes error into log
@@ -19,10 +21,12 @@ func (logger *Logger) Error(c *gin.Context, httpCode int, errorCode uint, msg st
 	logger.Errorf("[%d][%d] %s [%s] %s", httpCode, errorCode,
 		time.Now().Format("02.01.2006 15:04:05"), requestUrlString, msg)
 	if requestBody != nil {
-		logger.Errorf("Body: %s", string(requestBody))
+		unescapedBody, _ := url.QueryUnescape(string(requestBody))
+		logger.Errorf("Body: %s", unescapedBody)
 	}
 	if request != nil {
-		logger.Errorf("Request: %v", request)
+		unescapedRequest, _ := url.QueryUnescape(fmt.Sprintf("%v", request))
+		logger.Errorf("Request: %s", unescapedRequest)
 	}
 }
 
@@ -46,9 +50,11 @@ func (logger *Logger) Success(c *gin.Context, httpCode int, msg string, requestB
 	logger.Infof("[%d][%d] %s [%s] %s", httpCode, CodeSuccess,
 		time.Now().Format("02.01.2006 15:04:05"), requestUrlString, msg)
 	if requestBody != nil {
-		logger.Infof("Body: %s", string(requestBody))
+		unescapedBody, _ := url.QueryUnescape(string(requestBody))
+		logger.Infof("Body: %s", unescapedBody)
 	}
 	if request != nil {
-		logger.Infof("Request: %v", request)
+		unescapedRequest, _ := url.QueryUnescape(fmt.Sprintf("%v", request))
+		logger.Infof("Request: %s", unescapedRequest)
 	}
 }

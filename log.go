@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"time"
 	"sync"
+	"time"
 
 	"github.com/ccding/go-logging/logging"
 	"github.com/mtfelian/cli"
@@ -21,7 +21,7 @@ var (
 
 type Logger struct {
 	*logging.Logger
-	logSync   sync.Mutex         // мьютекс для логирования
+	logSync sync.Mutex // мьютекс для логирования
 }
 
 const logFileExtension = ".log"
