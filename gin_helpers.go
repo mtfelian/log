@@ -15,11 +15,12 @@ func (logger *Logger) Error(c *gin.Context, httpCode int, errorCode uint, msg st
 	var request *http.Request
 	if c != nil {
 		requestUrlString = c.Request.URL.String()
+		unescapedRequestUrlString, _ = url.QueryUnescape(requestUrlString)
 		request = c.Request
 	}
 
 	logger.Errorf("[%d][%d] %s [%s] %s", httpCode, errorCode,
-		time.Now().Format("02.01.2006 15:04:05"), requestUrlString, msg)
+		time.Now().Format("02.01.2006 15:04:05"), unescapedRequestUrlString, msg)
 	if requestBody != nil {
 		unescapedBody, _ := url.QueryUnescape(string(requestBody))
 		logger.Errorf("Body: %s", unescapedBody)
@@ -44,11 +45,12 @@ func (logger *Logger) Success(c *gin.Context, httpCode int, msg string, requestB
 	var request *http.Request
 	if c != nil {
 		requestUrlString = c.Request.URL.String()
+		unescapedRequestUrlString, _ = url.QueryUnescape(requestUrlString)
 		request = c.Request
 	}
 
 	logger.Infof("[%d][%d] %s [%s] %s", httpCode, CodeSuccess,
-		time.Now().Format("02.01.2006 15:04:05"), requestUrlString, msg)
+		time.Now().Format("02.01.2006 15:04:05"), unescapedRequestUrlString, msg)
 	if requestBody != nil {
 		unescapedBody, _ := url.QueryUnescape(string(requestBody))
 		logger.Infof("Body: %s", unescapedBody)
