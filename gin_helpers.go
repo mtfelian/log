@@ -11,7 +11,7 @@ import (
 
 // Error writes error into log
 func (logger *Logger) Error(c *gin.Context, httpCode int, errorCode uint, msg string, requestBody []byte) {
-	var requestUrlString string
+	var requestUrlString, unescapedRequestUrlString string
 	var request *http.Request
 	if c != nil {
 		requestUrlString = c.Request.URL.String()
@@ -41,7 +41,7 @@ func (logger *Logger) ReturnError(c *gin.Context, httpCode int, errorCode uint, 
 
 // Success writes success into log
 func (logger *Logger) Success(c *gin.Context, httpCode int, msg string, requestBody []byte) {
-	var requestUrlString string
+	var requestUrlString, unescapedRequestUrlString string
 	var request *http.Request
 	if c != nil {
 		requestUrlString = c.Request.URL.String()
